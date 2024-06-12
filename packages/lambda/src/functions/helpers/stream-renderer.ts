@@ -134,7 +134,7 @@ const streamRenderer = ({
 		callLambdaWithStreaming({
 			functionName,
 			payload,
-			retriesRemaining: 1,
+			retriesRemaining: 2,
 			region: getCurrentRegionInFunction(),
 			timeoutInTest: 12000,
 			type: LambdaRoutines.renderer,

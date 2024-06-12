@@ -70,6 +70,11 @@ export const callLambdaWithStreaming = async <T extends LambdaRoutines>(
 		await callLambdaWithStreamingWithoutRetry<T>(options);
 	} catch (err) {
 		if (options.retriesRemaining === 0) {
+			const logOptions = options as Options<LambdaRoutines.renderer>
+			if (logOptions.payload?.chunk) {
+		    console.log(`chunk=${logOptions.payload.chunk}`, 'Retries exhausted', err);
+			}
+
 			throw err;
 		}
 
@@ -116,7 +121,7 @@ const callLambdaWithoutRetry = async <T extends LambdaRoutines>({
 	}
 };
 
-const STREAM_STALL_TIMEOUT = 30000;
+const STREAM_STALL_TIMEOUT = 30000 * 2;
 const LAMBDA_STREAM_STALL = `AWS did not invoke Lambda in ${STREAM_STALL_TIMEOUT}ms`;
 
 const invokeStreamOrTimeout = async ({
@@ -132,12 +137,16 @@ const invokeStreamOrTimeout = async ({
 	type: string;
 	payload: Record<string, unknown>;
 }) => {
+  const invocationStart = Date.now();
 	const resProm = getLambdaClient(region, timeoutInTest).send(
 		new InvokeWithResponseStreamCommand({
 			FunctionName: functionName,
 			Payload: JSON.stringify({type, ...payload}),
 		}),
-	);
+	).then(invocationResult => {
+	 console.log(`chunk=${payload?.chunk}`, `Invocation succeeded after ${Date.now() - invocationStart}ms`);
+	 return invocationResult;
+	})
 
 	let cleanup = () => undefined;
 
