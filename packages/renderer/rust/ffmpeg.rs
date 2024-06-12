@@ -77,10 +77,11 @@ pub fn extract_frame(
     let one_frame_in_time_base = calc_position(time_of_one_frame_in_seconds, vid.time_base);
 
     // If a video has no FPS, take a high threshold, like 10fps
-    let threshold = match is_variable_fps {
-        true => calc_position(1.0, vid.time_base),
-        false => one_frame_in_time_base,
-    };
+    // let threshold = match is_variable_fps {
+    //     true => calc_position(1.0, vid.time_base),
+    //     false => one_frame_in_time_base,
+    // };
+    let threshold = 33;
 
     // Don't allow previous frame, but allow for some flexibility
     let cache_item = FrameCacheManager::get_instance().get_cache_item_id(
