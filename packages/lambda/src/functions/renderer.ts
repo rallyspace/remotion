@@ -293,9 +293,10 @@ const renderHandler = async ({
 		params.logLevel,
 	);
 
+	let audioChunkRenderedPromise;
 	if (audioOutputLocation) {
 		const audioChunkTimer = timer('Sending audio chunk', params.logLevel);
-		onStream({
+		audioChunkRenderedPromise = onStream({
 			type: 'audio-chunk-rendered',
 			payload: fs.readFileSync(audioOutputLocation),
 		})
@@ -315,13 +316,25 @@ const renderHandler = async ({
 			});
 	}
 
+	console.log(`chunk=${chunk}`, 'videoOutputLocation:', videoOutputLocation);
+	let videoChunkRenderedPromise;
 	if (videoOutputLocation) {
 		const videoChunkTimer = timer('Sending main chunk', params.logLevel);
-		onStream({
+
+		let videoPayload;
+		try {
+		  videoPayload = fs.readFileSync(videoOutputLocation);
+			console.log(`chunk=${chunk}`, 'video payload size', videoPayload?.length)
+		} catch (e) {
+		  console.log(`chunk=${chunk}`, 'Failed to read videoOutput', e);
+		  throw e;
+		}
+
+		videoChunkRenderedPromise = onStream({
 			type: RenderInternals.isAudioCodec(params.codec)
 				? 'audio-chunk-rendered'
 				: 'video-chunk-rendered',
-			payload: fs.readFileSync(videoOutputLocation),
+			payload: videoPayload // fs.readFileSync(videoOutputLocation),
 		})
 			.then(() => {
 				videoChunkTimer.end();
@@ -341,7 +354,7 @@ const renderHandler = async ({
 
 	const endRendered = Date.now();
 
-	onStream({
+	const chunkCompletePromise = onStream({
 		type: 'chunk-complete',
 		payload: {
 			rendered: endRendered,
@@ -349,6 +362,16 @@ const renderHandler = async ({
 		},
 	}).then(() => {
 		streamTimer.end();
+	}).catch(err => {
+
+	RenderInternals.Log.error(
+			{indent: false, logLevel: params.logLevel},
+			`Error occurred while streaming chunk-complete to main function`,
+		);
+		RenderInternals.Log.error(
+			{indent: false, logLevel: params.logLevel},
+			err,
+		);
 	});
 
 	RenderInternals.Log.verbose(
@@ -358,6 +381,9 @@ const renderHandler = async ({
 
 	await Promise.all(
 		[
+		  audioChunkRenderedPromise,
+			videoChunkRenderedPromise,
+			chunkCompletePromise,
 			fs.promises.rm(videoOutputLocation, {recursive: true}),
 			audioOutputLocation
 				? fs.promises.rm(audioOutputLocation, {recursive: true})

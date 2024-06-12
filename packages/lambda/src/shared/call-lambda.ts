@@ -69,11 +69,9 @@ export const callLambdaWithStreaming = async <T extends LambdaRoutines>(
 		// Do not remove this await
 		await callLambdaWithStreamingWithoutRetry<T>(options);
 	} catch (err) {
+	  const chunk = (options as Options<LambdaRoutines.renderer>)?.payload?.chunk;
 		if (options.retriesRemaining === 0) {
-			const logOptions = options as Options<LambdaRoutines.renderer>
-			if (logOptions.payload?.chunk) {
-		    console.log(`chunk=${logOptions.payload.chunk}`, 'Retries exhausted', err);
-			}
+	    console.log(`chunk=${chunk}`, 'Retries exhausted', err);
 
 			throw err;
 		}
@@ -86,8 +84,8 @@ export const callLambdaWithStreaming = async <T extends LambdaRoutines>(
 			throw err;
 		}
 
-		console.error(err);
-		console.error('Retries remaining', options.retriesRemaining);
+		console.error(`chunk=${chunk}`, err);
+		console.error(`chunk=${chunk}`, 'Retries remaining', options.retriesRemaining);
 
 		return callLambdaWithStreaming({
 			...options,
