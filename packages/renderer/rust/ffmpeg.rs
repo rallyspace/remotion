@@ -77,10 +77,17 @@ pub fn extract_frame(
     let one_frame_in_time_base = calc_position(time_of_one_frame_in_seconds, vid.time_base);
 
     // If a video has no FPS, take a high threshold, like 10fps
-    let threshold = match is_variable_fps {
-        true => calc_position(1.0, vid.time_base),
-        false => one_frame_in_time_base,
-    };
+    // let threshold = match is_variable_fps {
+    //     true => calc_position(1.0, vid.time_base),
+    //     false => one_frame_in_time_base,
+    // };
+
+    let threshold = 33;
+
+    // _print_verbose(&format!(
+    //     "debug.extract_frame position:{} is_variable_fps:{} time_of_one_frame_in_seconds:{} one_frame_in_time_base:{} threshold:{}",
+    //     position, is_variable_fps, time_of_one_frame_in_seconds, one_frame_in_time_base, threshold
+    // ))?;
 
     // Don't allow previous frame, but allow for some flexibility
     let cache_item = FrameCacheManager::get_instance().get_cache_item_id(
@@ -94,6 +101,10 @@ pub fn extract_frame(
 
     match cache_item {
         Ok(Some(item)) => {
+            // _print_verbose(&format!(
+            //     "debug.frame-cache-hit time:{} position:{}",
+            //     time, position
+            // ))?;
             return Ok(FrameCacheManager::get_instance().get_cache_item_from_id(
                 &src,
                 &original_src,
@@ -149,6 +160,11 @@ pub fn extract_frame(
     let mut first_opened_stream = opened_stream.lock()?;
 
     let time_base = vid.time_base;
+
+    // _print_verbose(&format!(
+    //     "debug.ffmpeg-frame time:{} position:{} one_frame_in_time_base:{} threshold:{}",
+    //     time, position, one_frame_in_time_base, threshold
+    // ))?;
 
     let frame_id = first_opened_stream.get_frame(
         time,

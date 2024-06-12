@@ -191,6 +191,13 @@ impl FrameCache {
             }
         }
 
+
+        // let loggableBestItem = if best_item.is_none() { 0 } else { best_item.unwrap() };
+        // _print_debug(&format!(
+        //     "debug.using best match position:{} distance:{} item:{} threshold:{}",
+        //     time, best_distance, best_item.unwrap_or_else(|| 0), threshold
+        // ))?;
+
         let has_pts_after = self.items.iter().any(|item| item.resolved_pts >= time);
 
         // If this happens, then `last_frame` has not worked correctly. Do not match

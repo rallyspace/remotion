@@ -64,9 +64,6 @@ const bundleLambda = async () => {
 };
 
 bundleLambda()
-	.then(() => {
-		console.log('Bundled Lambda');
-	})
 	.catch((err) => {
 		console.log(err);
 		quit(1);
